@@ -1,0 +1,20 @@
+
+//modulo functions
+
+class Modulo {
+	function int mod2(int x) {
+		return x & 1;
+	}
+		
+	function int mod4(int x) { //I noticed later that it should be x&3, but this works better
+		return x & 4;
+	}
+	
+	function int mod32(int x) {
+		return x & 31;
+	}
+
+	function int mod(int x, int y) { //inefficient
+		return x - (y * (x / y));
+	}
+}

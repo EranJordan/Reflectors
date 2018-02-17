@@ -1,0 +1,30 @@
+
+class Main {
+
+    function void main() {
+	    var ReflectorsGame game;
+		var int timeWaited, seed;
+		var char key;
+		do Screen.clearScreen();
+		do Output.moveCursor(8, 15);
+	    do Output.printString("REFLECTORS - By Eran Jordan"); //using oututil causes unknown error
+		do Output.moveCursor(10, 18);
+	    do Output.printString("Press any key to start");
+		let key = 0;
+		let timeWaited = 0;
+		while (key = 0) {
+			let key = Keyboard.keyPressed();
+			do Sys.wait(10);
+			let timeWaited = timeWaited + 1;
+			if (timeWaited > 32600) { //edge case
+				let timeWaited = 32000;
+			}
+		}	
+		let seed = timeWaited; //wanted to add the key press to the seed but seems like it's not possible
+        do ReflectorsGame.newInstance(seed);
+        let game = ReflectorsGame.getInstance();
+        do game.run();
+        do game.dispose();
+        return;
+    }
+}

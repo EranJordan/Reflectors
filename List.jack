@@ -1,0 +1,37 @@
+
+//represents a list of all bullets in the game, based on the project files List class
+
+class List {
+    field Bullet data;         
+    field List next;      
+
+    /* Creates a List. */
+    constructor List new(Bullet car, List cdr) {
+        let data = car;     
+        let next = cdr;      
+        return this;
+    }
+
+    /** Accessors. */
+    method Bullet getData() { return data; }
+    method List getNext() { return next; }
+
+	
+    /** Disposes this List by recursively disposing its tail. */
+    method void dispose() {
+        if (~(next = null)) {
+            do next.dispose();
+        }
+        // Uses an OS routine to recycle this object.
+        do Memory.deAlloc(this);
+        return;
+    }
+
+	method boolean hasNext() {
+		if(next = null) {
+			return false;
+		}
+		return true;
+	}
+
+}

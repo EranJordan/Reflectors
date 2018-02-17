@@ -1,0 +1,120 @@
+
+//represents a reflector which the players use to reflect bullets
+
+class Reflector {
+	field int x, y, floor;
+	field boolean active;
+	field boolean direction; //true = left, false = right
+	field int duration; //duration you can use the reflector for
+	field int cooldown; //duration for which you cannot use reflector
+	
+	constructor Reflector new() {
+		let x = -4; //reflector is out of screen until player summons one
+		let y = -40;
+		let active = false;
+		let direction = false;
+		let duration = 2000;
+		let cooldown = 0;
+		return this;
+	}
+	
+
+	method int getHitbox() {
+		if (direction) {
+			return x;
+		}
+		return x + 5;
+	}
+	
+	method int getY() {
+		return y;
+	}
+	
+	method int getFloor() {
+		return floor;
+	}
+	
+	method boolean getDirection() {
+		return direction;
+	}
+	
+	method boolean isActive() {
+		return active;
+	}
+	
+	method int getDuration() {
+		return duration;
+	}
+	
+	method int getCooldown() {
+		return cooldown;
+	}
+
+	method void setX(int newX) {
+		let x = newX;
+		return;
+	}
+	
+	method void setY(int newY) {
+		let y = newY;
+		return;
+	}
+	
+	method void setFloor(int newFloor) {
+		let floor = newFloor;
+		return;
+	}
+	
+	method void setDirection(boolean newDirection) {
+		let direction = newDirection;
+		return;
+	}
+	
+	method void decreaseDuration() {
+
+		let duration = duration - ReflectorsGame.getGameStep();
+		if (duration < 1) {
+			let duration = 0;
+			do disappear();
+		}
+		return;
+	}
+	
+	method void decreaseCooldown() {
+		let cooldown = cooldown - ReflectorsGame.getGameStep();
+		if (cooldown < 1) {
+			let cooldown = 0;
+			let duration = 1500;
+		}
+		return;
+	}
+	
+	//reflectors are 3x40
+	method void draw() {
+		let active = true;
+		do Screen.setColor(false);
+		do Screen.drawRectangle(x, y + 3, x + 5, y + 38);
+		return;
+	}
+	
+	method void erase() {
+		let active = false;
+		do Screen.setColor(true);
+		do Screen.drawRectangle(x, y + 3, x + 5, y + 38);		
+		return;
+	}
+	
+	//reflector disappears, starting the cooldown and resetting the duration
+	method void disappear() {
+		do erase();
+		let x = -1;
+		let y = -1;
+		let cooldown = 1500;
+		return;
+	}
+	
+	method void dispose() {
+		do Memory.deAlloc(this);
+		return;
+	}
+}

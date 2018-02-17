@@ -1,0 +1,31 @@
+   //by cadet1620
+
+class OutUtil {
+
+/**
+ *    Print constant 'str' and dispose it.
+ */
+	function void printStringConst(String str) {
+		do Output.printString(str);
+		do str.dispose();
+		return;
+	}
+
+/**
+ *    Print 'str' followed by new-line.
+ */
+	function void printStringLn(String str) {
+		do Output.printString(str);
+		do Output.println();
+		return;
+	}
+
+/**
+ *    Print constant 'str' followed by new-line.
+ */
+	function void printStringConstLn(String str) {
+		do OutUtil.printStringConst(str);
+		do Output.println();
+		return;
+	}
+}

@@ -1,0 +1,35 @@
+
+//This class was created by Rowan Limb
+
+
+class Random {
+    static int seed; 
+    static int A; 
+    static int M; 
+    static int Q; 
+    static int R; 
+	
+    function void setSeed(int newSeed) {
+        let seed = newSeed; 
+        if(seed=0) { 
+           let seed=1; 
+        } 
+        let A=219; 
+        let M=32749; 
+        let Q=M/A; 
+        let R=Modulo.mod(M,A); 
+        return; 
+    }
+
+    function int rand() {
+        var int test; 
+        let test=(A*(Modulo.mod(seed,Q)))-(R*(seed/Q)); 
+        if(test<0) { 
+           let seed=test+M; 
+        } 
+        else { 
+           let seed=test; 
+        } 
+        return seed;
+    }
+}

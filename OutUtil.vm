@@ -1,0 +1,25 @@
+function OutUtil.printStringConst 0
+push argument 0
+call Output.printString 1
+pop temp 0
+push argument 0
+call String.dispose 1
+pop temp 0
+push constant 0
+return
+function OutUtil.printStringLn 0
+push argument 0
+call Output.printString 1
+pop temp 0
+call Output.println 0
+pop temp 0
+push constant 0
+return
+function OutUtil.printStringConstLn 0
+push argument 0
+call OutUtil.printStringConst 1
+pop temp 0
+call Output.println 0
+pop temp 0
+push constant 0
+return

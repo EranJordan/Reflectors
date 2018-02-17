@@ -1,0 +1,149 @@
+
+//Represents one of the players which you control
+
+class Player {
+	field int x, y, floor; //location (floor is just for simplicity, 0 = top floor, 2 = bottom floor)
+	field boolean playerNum; //true = player 1, false = player2
+	field Reflector reflector;
+	
+	
+	//player 1 should be at 200, 93 (109 - 16)
+	//player 2 should be at 312, 93 (109 - 16)
+	constructor Player new(int Ax, int Ay, boolean AplayerNum) {
+		let x = Ax;
+		let y = Ay;
+		let floor = 1;
+		let playerNum = AplayerNum;
+		let reflector = Reflector.new();
+		do draw();
+		return this;
+	}
+
+	method int getX() {
+		return x;
+	}
+	
+	method int getY() {
+		return y;
+	}
+	
+	method int getFloor() {
+		return floor;
+	}
+	
+	method int getLeftHitbox() {
+		return x - 5;
+	}
+	
+	method int getRightHitbox() {
+		return x + 5;
+	}
+	
+	method Reflector getReflector() {
+		return reflector;
+	}
+	
+	method void setX(int newX) {
+		let x = newX;
+		return;
+	}
+	
+	method void setY(int newY) {
+		let y = newY;
+		return;
+	}
+	
+	method void move(boolean direction) { //true = up, false = down
+		do erase();
+		if (direction) { //up
+			if (~(floor = 0)) {
+				let floor = floor - 1;
+				let y = y - 40; //floors are 40 pix apart
+			}
+		}
+		else {
+			if (~(floor = 2)) { //down
+				let floor = floor + 1;
+				let y = y + 40;
+			}
+		}
+		do draw();
+		return;
+	}
+	
+	method void reflect(boolean direction) { //true = left, false = right;
+		if (reflector.getCooldown() > 0) {
+			return;
+		}
+		if (reflector.isActive()) {
+			return;
+		}
+		do reflector.setY(y - 24); //topleft of player is 24 pix below next floor
+		do reflector.setDirection(direction);
+		do reflector.setFloor(floor);
+		if (direction) { //left
+			do reflector.setX(x - 18);
+		}
+		else { //right
+			do reflector.setX(x + 15);
+		}
+		do reflector.draw();
+		return;
+	}
+	
+	method void draw() { 
+		var int location;
+		var int memAddress;
+		let location = (32 * y) + (x / 16);
+		let memAddress = 16384+location;
+		if (playerNum) {
+			do Memory.poke(memAddress+0, -4081);
+			do Memory.poke(memAddress+32, -6553);
+			do Memory.poke(memAddress+64, -7609);
+			do Memory.poke(memAddress+96, -8185);
+			do Memory.poke(memAddress+128, -6121);
+			do Memory.poke(memAddress+160, -6169);
+			do Memory.poke(memAddress+192, -4081);
+			do Memory.poke(memAddress+224, -385);
+			do Memory.poke(memAddress+256, -4081);
+			do Memory.poke(memAddress+288, -6121);
+			do Memory.poke(memAddress+320, -6121);
+			do Memory.poke(memAddress+352, -6121);
+			do Memory.poke(memAddress+384, -2017);
+			do Memory.poke(memAddress+416, -1057);
+			do Memory.poke(memAddress+448, -1057);
+			do Memory.poke(memAddress+480, -1057);
+		}
+		else {
+			do Memory.poke(memAddress+0, -8185);
+			do Memory.poke(memAddress+32, -6553);
+			do Memory.poke(memAddress+64, -6553);
+			do Memory.poke(memAddress+96, -8185);
+			do Memory.poke(memAddress+128, -6121);
+			do Memory.poke(memAddress+160, -6169);
+			do Memory.poke(memAddress+192, -8185);
+			do Memory.poke(memAddress+224, -385);
+			do Memory.poke(memAddress+256, -4081);
+			do Memory.poke(memAddress+288, -6121);
+			do Memory.poke(memAddress+320, -6121);
+			do Memory.poke(memAddress+352, -6121);
+			do Memory.poke(memAddress+384, -2017);
+			do Memory.poke(memAddress+416, -1057);
+			do Memory.poke(memAddress+448, -1057);
+			do Memory.poke(memAddress+480, -1057);
+		}
+		return;
+	}
+	
+	method void erase() {
+		do Screen.setColor(true);
+		do Screen.drawRectangle(x-8, y, x+8, y+15);
+		return;
+	}
+
+	method void dispose() {
+		do reflector.dispose();
+		do Memory.deAlloc(this);
+		return;
+	}	
+}

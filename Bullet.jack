@@ -1,0 +1,96 @@
+
+//represents a bullet which the players need to avoid or reflect
+
+class Bullet {
+	field int x, y, floor; //location (floor is just for simplicity, 0 = top floor, 2 = bottom floor)
+	field boolean direction; //true = left, false = right;
+	field int speed;
+	
+	constructor Bullet new(int Afloor, boolean Adirection) {
+		let floor = Afloor;
+		let direction = Adirection;
+		if (direction) {  //left
+			let x = 507;
+		}
+		else { //right
+			let x = 0;
+		}
+		let y = 56 + (floor * 40); //bullets hover 14 pix above the floor, floors are 40 pix apart, first floor at 70
+		let speed = 1; 
+		do draw();
+		return this;
+	}
+	
+	constructor Bullet dummy() { //a hacky fix to a bug, creates a dummy bullet to start the bulletList
+		let x = 0;
+		let y = 250;
+		let direction = false;
+		let speed = 0;
+		return this;
+	}
+	
+	method int getHitbox() {
+		if (direction) { 
+			return x;
+		}
+		return x+4;
+	}
+	
+	method int getFloor() {
+		return floor;
+	}
+	
+	method boolean getDirection() {
+		return direction;
+	}
+	
+	method void setX(int newX) {
+		let x = newX;
+		return;
+	}
+	
+	//bullets are 4x4
+	method void draw() {
+		do Screen.setColor(false);
+		do Screen.drawRectangle(x, y, x + 4, y + 4);
+		return;
+	}
+	
+	method void erase() {
+		do Screen.setColor(true);
+		do Screen.drawRectangle(x, y, x + 4, y + 4);
+		return;	
+	}
+	
+	method void move() {
+		do erase();
+		if (direction) { //left
+			let x = x - speed;
+			while (x < 0) { //wrap right (shouldn't happen more than once, but just in case it's a while)
+				let x = x + 507;
+			}
+		}
+		else { //right 
+			let x = x + speed;
+			while (x > 507) { //wrap left
+				let x = x - 507;
+			}
+		}
+		do draw();
+		return;
+	}
+	
+	method void bounce() {	//bounce off a reflector, change direction and increase speed
+		let direction = ~direction;
+		let speed = speed * 2;
+		if (speed > 6) { //max speed
+			let speed = 6;
+		}
+		return;
+	}
+	
+	method void dispose() {
+		do Memory.deAlloc(this);
+		return;
+	}	
+}

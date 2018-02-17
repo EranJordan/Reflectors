@@ -1,0 +1,306 @@
+
+//represents a Reflectors game
+
+class ReflectorsGame {
+	static ReflectorsGame instance;
+	field Player player1, player2;
+	field List bulletList;
+	field boolean exit;
+	field int winningPlayer;
+	field int bulletCount;
+    static int gameStep; //how long each gameStep is (in miliseconds)
+	
+	constructor ReflectorsGame new() {
+		var Bullet bullet;
+		do Screen.clearScreen();
+		do Screen.setColor(true);
+		do Screen.drawRectangle(0, 0, 511, 189); //draw game area
+	    do Screen.setColor(false);
+		do Screen.drawRectangle(0, 69, 511, 71); //draw floors
+		do Screen.drawRectangle(0, 109, 511, 111);
+		do Screen.drawRectangle(0, 149, 511, 151);
+		do Output.moveCursor(18, 0);  //write text area
+		do OutUtil.printStringConstLn("player 1:                    player 2:");
+		do OutUtil.printStringConstLn("      W/S move up/down            up/down move up/down");
+		do OutUtil.printStringConstLn("      A/D block left/right        left/right block left/right");
+		do Output.println();
+		do OutUtil.printStringConst("           Copyright EJ Entertainment, LTD TM (2017)");
+		let player1 = Player.new(200, 93, true);
+		let player2 = Player.new(312, 93, false);
+		let gameStep = 20;
+		let bulletCount = 0;
+		let bulletList = List.new(Bullet.dummy(), null);
+		return this;
+	}
+	
+	method void dispose() {
+		do player1.dispose();
+		do player2.dispose();
+		do bulletList.dispose();
+        do Memory.deAlloc(this);
+		return;
+	}
+	
+	function int getGameStep() {
+		return gameStep;
+	}
+	
+    function void newInstance(int seed) {
+		do Random.setSeed(seed);
+        let instance = ReflectorsGame.new();
+        return;
+    }
+
+    function ReflectorsGame getInstance() {
+        return instance;
+    }		
+	
+    method void run() {
+        var char key;
+		var Reflector reflector1, reflector2;
+		let reflector1 = player1.getReflector();
+		let reflector2 = player2.getReflector();
+		while (~(exit)) {
+            while ((key = 0) & (~exit)) {
+                let key = Keyboard.keyPressed();
+				do update();
+            }
+			if (key = 131) { do player2.move(true); }
+			else {
+				if (key = 133) { do player2.move(false); }
+				else {
+					if (key = 87) { do player1.move(true); }
+					else {
+					 if (key = 83) { do player1.move(false); }
+					 else {
+						if (key = 65) { do player1.reflect(true); }
+						else {
+							if (key = 68) { do player1.reflect(false); }
+							else {
+								if (key = 130) { do player2.reflect(true); }
+								else {
+									if(key = 132) { do player2.reflect(false);}
+								}
+							}
+						}
+						}
+					}
+				}	
+			}
+			while ((~(key = 0)) & (~exit)) {
+			    let key = Keyboard.keyPressed();
+				do update();
+			}
+		}
+        return;		
+	}
+	
+	method void update() {
+		var Reflector reflector1, reflector2;
+	    if (bulletCount < 18) { do randomSpawn(); }
+		do moveBullets();	
+		let reflector1 = player1.getReflector();
+		let reflector2 = player2.getReflector();
+		if (reflector1.isActive()) { do reflector1.decreaseDuration(); }	
+		if (reflector2.isActive()) { do reflector2.decreaseDuration(); }
+		if (reflector1.getCooldown() > 0) { do reflector1.decreaseCooldown(); }
+		if (reflector2.getCooldown() > 0) { do reflector2.decreaseCooldown(); }		
+        do Sys.wait(gameStep);
+		return;
+	}
+	
+	method void randomSpawn() {
+		var Bullet bullet;
+		if (~(Modulo.mod32(Random.rand()) = 0)) { // pace out bullet spawns
+			return;
+		}
+		if (~(Modulo.mod4(Random.rand()) = 0)) { 
+			return;
+		}		
+		let bulletCount = bulletCount + 1;
+		let bullet = spawn();
+		let bulletList = List.new(bullet, bulletList);
+		return;
+	}
+	
+	method Bullet spawn() {
+		var int floor;
+		var boolean direction;
+		var Bullet bullet;
+		let direction = false;
+		if (Modulo.mod2(Random.rand()) = 0) { // 50/50 to go left/right
+			let direction = true;
+		}
+		let floor = Modulo.mod(Random.rand(), 3);
+		let bullet = Bullet.new(floor, direction);
+		return bullet;		
+	}
+	
+	method void moveBullets() {
+		var Bullet curr;
+		var List list;
+		let curr = bulletList.getData();
+		do curr.move();
+		do checkHitboxes(curr);
+		if (bulletList.hasNext()) {
+			let list = bulletList.getNext();
+			while (list.hasNext()) {
+				let curr = list.getData();
+				do curr.move();
+				do checkHitboxes(curr);
+				let list = list.getNext();
+			}
+		}
+		return;
+	}
+	
+	method void checkHitboxes(Bullet bullet) {
+		var boolean reflected;
+		let reflected = checkReflectorHitboxes(bullet);
+		if (~(reflected)) { do checkPlayerHitboxes(bullet); }
+		return;
+	}
+	
+	method boolean checkReflectorHitboxes(Bullet bullet) { //check if bullet hit anything
+		var Reflector reflector1, reflector2;
+		var int reflector1Hitbox, reflector2Hitbox, bulletHitbox;
+		var boolean reflector1Direction, reflector2Direction;
+		var int player1Hitbox, player2Hitbox;
+		let bulletHitbox = bullet.getHitbox();
+		let reflector1 = player1.getReflector();
+		let reflector2 = player2.getReflector();
+		//we check things in order of likelyhood for efficiency
+		if (reflector1.isActive()) { //check if active
+			if (reflector1.getFloor() = bullet.getFloor()) { //check if bullet is on the same floor
+				let reflector1Direction = reflector1.getDirection();
+				let reflector1Hitbox = reflector1.getHitbox();
+				if (~(reflector1Direction = bullet.getDirection())) { //opposite directions = possible collision
+					if (reflector1Direction) { //left, bullet is going right, need to check if bullet.x >= reflector.x
+						if (bulletHitbox > (reflector1Hitbox - 1)) { //area hitbox: between reflector and player
+							if (bulletHitbox < (player1.getRightHitbox())) {
+								    do bullet.setX(reflector1Hitbox + 2);
+									do bullet.bounce();									
+									return true;
+								}
+						}
+					}
+					else { //right, bullet is going left, need to check if bullet.x <= reflector.x
+						if (bulletHitbox < (reflector1Hitbox + 1)) {
+							if (bulletHitbox > (player1.getLeftHitbox())) {
+									do bullet.setX(reflector1Hitbox - 2);
+									do bullet.bounce();							
+									return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		//same for reflector 2
+		if (reflector2.isActive()) { //check if active
+			if (reflector2.getFloor() = bullet.getFloor()) { //check if bullet is on the same floor
+				let reflector2Direction = reflector2.getDirection();
+				let reflector2Hitbox = reflector2.getHitbox();
+				if (~(reflector2Direction = bullet.getDirection())) { //opposite directions = possible collision
+					if (reflector2Direction) { //left, bullet is going right, need to check if bullet.x >= reflector.x
+						if (bulletHitbox > (reflector2Hitbox - 2)) { //area hitbox: between reflector and player
+							if (bulletHitbox < (player2.getRightHitbox())) {
+								    do bullet.setX(reflector2Hitbox + 2);
+									do bullet.bounce();									
+									return true;
+								}
+						}
+					}
+					else { //right, bullet is going left, need to check if bullet.x <= reflector.x
+						if (bulletHitbox < (reflector2Hitbox + 2)) {
+							if (bulletHitbox > (player2.getLeftHitbox())) {
+									do bullet.setX(reflector2Hitbox - 2);
+									do bullet.bounce();							
+									return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	method void checkPlayerHitboxes(Bullet bullet) { //see reflectorHitboxes for explanation
+		var int bulletHitbox, player1Floor, player2Floor, bulletFloor;
+		var boolean bulletDirection;
+		let bulletHitbox = bullet.getHitbox();
+		let bulletDirection = bullet.getDirection();
+		let player1Floor = player1.getFloor();
+		let player2Floor = player2.getFloor();
+		let bulletFloor = bullet.getFloor();
+		if (bulletDirection) { //if going left, get rightHitboxes
+			if (bulletFloor = player1Floor) {
+				if (bulletHitbox < (player1.getRightHitbox() + 1)) { //if inside the player sprite
+					if (bulletHitbox > (player1.getLeftHitbox() - 1)) { 
+						do win(2);
+						return;
+					}
+				}
+			}
+			if (bulletFloor = player2Floor) {
+				if (bulletHitbox < (player2.getRightHitbox() + 1)) {
+					if (bulletHitbox > (player2.getLeftHitbox() - 1)) {
+						do win(1);
+						return;
+					}
+				}
+			}
+		}
+		else { //if going right, get leftHitboxes
+			if (bulletFloor = player1Floor) {
+				if (bulletHitbox > (player1.getLeftHitbox() - 4)) {
+					if (bulletHitbox < (player1.getRightHitbox() + 1)) { 
+						do win(2);
+						return;
+					}
+				}
+			}
+			if (bulletFloor = player2Floor) {
+				if (bulletHitbox > (player2.getLeftHitbox() - 4)) {
+					if (bulletHitbox < (player2.getRightHitbox() + 1)) {
+						do win(1);
+						return;
+					}
+				}
+			}
+		}
+		return;
+	}
+	
+	method void win(int playerNum) {
+		let exit = true;
+		let winningPlayer = playerNum;
+		do victoryScreen();
+		return;
+	}
+	
+	method void victoryScreen() {
+		var int i;
+		do Sys.wait(750);
+		do Screen.clearScreen();
+		do Output.moveCursor(7,20);
+		do OutUtil.printStringConst("Player ");
+		do Output.printInt(winningPlayer);
+		do OutUtil.printStringConst(" Wins!");
+		do Output.moveCursor(13, 19);
+		do OutUtil.printStringConst("Thanks for playing!");
+		let i = 0;
+		do player1.setY(112);
+		do player2.setY(112);
+		while (i < 16) {
+			do player1.setX(i * 32);
+			do player2.setX(player1.getX() + 16);	
+			do player1.draw();
+			do player2.draw();
+			let i = i + 1;
+		}
+		do Sys.wait(5000);
+		return;
+	}
+}
